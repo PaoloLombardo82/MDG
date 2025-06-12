@@ -1,0 +1,13 @@
+streamlit
+yfinance
+pandas
+numpy
+scikit-learn
+ta
+plotly
+textblob
+newspaper3k
+requests
+beautifulsoup4
+python-dotenv
+python-telegram-bot --pre
