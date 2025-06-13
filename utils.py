@@ -1,18 +1,16 @@
-# utils.py
-
 import yfinance as yf
 import pandas as pd
 import ta
 import time
 
 def descargar_datos(ticker="BTC-USD", periodo="2y", intentos=3):
-    """Descarga datos históricos del activo seleccionado con reintentos"""
+    """Descarga datos históricos del activo seleccionado"""
     for i in range(intentos):
         print(f"🔄 Descargando datos de {ticker}... (intento {i+1})")
         try:
             data = yf.download(ticker, period=periodo, auto_adjust=True, progress=False)
             if len(data) == 0:
-                raise ValueError("Datos vacíos devueltos por yfinance")
+                raise ValueError("Datos vacíos devueltos por Yahoo Finance")
 
             data = data[['Close']].dropna()
             data.columns = ['close']
@@ -24,12 +22,9 @@ def descargar_datos(ticker="BTC-USD", periodo="2y", intentos=3):
             if i < intentos - 1:
                 print("⏳ Reintentando en 5 segundos...")
                 time.sleep(5)
-            else:
-                print("❌ No se pudo descargar datos después de varios intentos")
-                return pd.DataFrame(), pd.Series()  # Devolver estructura vacía pero válida
 
+    print("❌ No se pudo descargar datos después de varios intentos")
     return pd.DataFrame(), pd.Series()
-
 
 def calcular_indicadores(data, close_series):
     """Calcula RSI, MACD, SMA_20, SMA_50"""
@@ -42,6 +37,5 @@ def calcular_indicadores(data, close_series):
     data['MACD'] = ta.trend.MACD(close_series).macd()
     data['SMA_20'] = close_series.rolling(window=20).mean()
     data['SMA_50'] = close_series.rolling(window=50).mean()
-
     data = data.dropna()
     return data
