@@ -7,25 +7,53 @@ import os
 def generar_grafico(data, ticker):
     """Genera un gráfico interactivo del precio y RSI"""
 
+    # Verificar si se han calculado los indicadores necesarios
+    if 'RSI' not in data.columns:
+        from utils import calcular_indicadores
+        close_series = data['close'].squeeze()
+        data = calcular_indicadores(data, close_series)
+
+    # Crear gráfico interactivo
     fig = go.Figure()
 
     # Precio Close
-    fig.add_trace(go.Scatter(x=data.index, y=data['close'], name='Precio'))
-    fig.update_layout(title=f"Precio y Medias Móviles de {ticker}", xaxis_title="Fecha", yaxis_title="Precio USD")
-
-    # RSI
-    fig.add_trace(go.Scatter(x=data.index, y=data['RSI'], name='RSI'))
-    fig.add_hline(y=30, line_dash="dash", line_color="green")
-    fig.add_hline(y=70, line_dash="dash", line_color="red")
-    fig.update_layout(title="RSI (Índice de Fuerza Relativa)", yaxis_range=[0, 100])
-
-    # Guardar como HTML
-    carpeta_salida = r"C:\Users\Pablo\Desktop\ia_bolsa_web\graficos_html"
-    if not os.path.exists(carpeta_salida):
-        os.makedirs(carpeta_salida)
-
-    ruta_archivo = os.path.join(carpeta_salida, f"{ticker}_{datetime.now().strftime('%Y%m%d_%H%M')}.html")
-    fig.write_html(ruta_archivo)
+    fig.add_trace(go.Scatter(x=data.index, y=data['close'], name='Precio', line=dict(color='black')))
     
-    print(f"📊 Gráfico guardado: {ruta_archivo}")
-    return ruta_archivo
+    # Medias Móviles (SMA 20 y SMA 50)
+    if 'SMA_20' in data.columns:
+        fig.add_trace(go.Scatter(x=data.index, y=data['SMA_20'], name='SMA 20', line=dict(color='blue')))
+    
+    if 'SMA_50' in data.columns:
+        fig.add_trace(go.Scatter(x=data.index, y=data['SMA_50'], name='SMA 50', line=dict(color='orange')))
+
+    fig.update_layout(
+        title=f"Precio y Medias Móviles de {ticker}",
+        xaxis_title="Fecha",
+        yaxis_title="Precio USD",
+        template="plotly_white"
+    )
+
+    # Añadir RSI si está disponible
+    if 'RSI' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['RSI'],
+            name='RSI',
+            yaxis="y2",
+            line=dict(color='red')
+        ))
+
+        fig.update_layout(
+            yaxis2=dict(
+                title="RSI",
+                overlaying="y",
+                side="right",
+                range=[0, 100],
+                showgrid=False
+            )
+        )
+
+        fig.add_hline(y=30, line_dash="dash", line_color="green")
+        fig.add_hline(y=70, line_dash="dash", line_color="red")
+
+    return fig
